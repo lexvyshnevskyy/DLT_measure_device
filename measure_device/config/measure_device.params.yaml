@@ -1,0 +1,8 @@
+measure_device_publisher:
+  ros__parameters:
+    endpoint: measure_device
+    publish_rate: 10.0
+    port: /dev/ttyUSB0
+    speed: 9600
+    frame_id_ready: e720_ready
+    frame_id_offline: e720_offline
