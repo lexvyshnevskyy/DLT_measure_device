@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, String
+from std_msgs.msg import Float32, String, UInt8
 from msgs.msg import E720
 
 from .e720.driver import ParseData
@@ -24,9 +24,13 @@ class MeasureDevicePublisher(Node):
         self.declare_parameter('frame_id_offline', 'e720_offline')
         self.declare_parameter('offline_timeout_sec', 1.0)
         self.declare_parameter('offline_publish_period_sec', 1.0)
+        self.declare_parameter('command_topic', '/measure_device/command')
 
         self.publish_rate = float(self.get_parameter('publish_rate').value)
-        self.endpoint = str(self.get_parameter('endpoint').value)
+        endpoint = str(self.get_parameter('endpoint').value)
+        self.endpoint = endpoint if endpoint.startswith('/') else f'/{endpoint}'
+        command_topic = str(self.get_parameter('command_topic').value)
+        self.command_topic = command_topic if command_topic.startswith('/') else f'{self.endpoint}/command'
         self.port = str(self.get_parameter('port').value)
         self.speed = int(self.get_parameter('speed').value)
         self.frame_id_ready = str(self.get_parameter('frame_id_ready').value)
@@ -35,6 +39,7 @@ class MeasureDevicePublisher(Node):
         self.offline_publish_period_sec = float(self.get_parameter('offline_publish_period_sec').value)
 
         self.publisher_ = self.create_publisher(E720, self.endpoint, 10)
+        self.create_subscription(UInt8, self.command_topic, self._on_command, 10)
         self.parser = ParseData()
         self.connector = RSConnector(port=self.port, speed=self.speed)
 
@@ -46,8 +51,20 @@ class MeasureDevicePublisher(Node):
 
         self.get_logger().info(
             f'Started measure_device publisher: topic={self.endpoint}, rate={self.publish_rate} Hz, '
-            f'port={self.port}, speed={self.speed}, offline_timeout_sec={self.offline_timeout_sec}'
+            f'port={self.port}, speed={self.speed}, offline_timeout_sec={self.offline_timeout_sec}, '
+            f'command_topic={self.command_topic}'
         )
+
+    def _on_command(self, msg: UInt8) -> None:
+        byte_val = int(msg.data) & 0xFF
+        try:
+            if not self.connector.is_open() and not self.connector.reconnect():
+                self.get_logger().warning('E7-20 command ignored: serial port is not open')
+                return
+            written = self.connector.sent_message(bytes([byte_val]))
+            self.get_logger().info(f'E7-20 command sent: byte={byte_val}, written={written}')
+        except Exception as exc:
+            self.get_logger().error(f'Failed to send E7-20 command byte={byte_val}: {exc}')
 
     def _should_publish_offline(self) -> bool:
         now = time.monotonic()

@@ -1,6 +1,7 @@
 measure_device_publisher:
   ros__parameters:
-    endpoint: measure_device
+    endpoint: /measure_device
+    command_topic: /measure_device/command
     publish_rate: 10.0
     port: /dev/ttyUSB0
     speed: 9600

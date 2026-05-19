@@ -11,6 +11,7 @@ def generate_launch_description():
     speed_arg = DeclareLaunchArgument('speed', default_value='9600')
     frame_id_ready_arg = DeclareLaunchArgument('frame_id_ready', default_value='e720_ready')
     frame_id_offline_arg = DeclareLaunchArgument('frame_id_offline', default_value='e720_offline')
+    command_topic_arg = DeclareLaunchArgument('command_topic', default_value='/measure_device/command')
 
     node = Node(
         package='measure_device',
@@ -26,6 +27,7 @@ def generate_launch_description():
             'speed': LaunchConfiguration('speed'),
             'frame_id_ready': LaunchConfiguration('frame_id_ready'),
             'frame_id_offline': LaunchConfiguration('frame_id_offline'),
+            'command_topic': LaunchConfiguration('command_topic'),
         }],
     )
 
@@ -36,5 +38,6 @@ def generate_launch_description():
         speed_arg,
         frame_id_ready_arg,
         frame_id_offline_arg,
+        command_topic_arg,
         node,
     ])
