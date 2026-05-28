@@ -19,7 +19,6 @@ setup(
     maintainer_email='lex.vyshnevskyy@gmail.com',
     description='ROS 2 publisher node for the E7-20 measurement device over RS232.',
     license='TODO',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'measure_device_node = measure_device.node:main',
